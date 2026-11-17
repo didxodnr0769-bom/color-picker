@@ -43,14 +43,13 @@ screen.addEventListener('click', async (event) => {
   const { color } = hexAt(event);
   try {
     await navigator.clipboard.writeText(color);
-    notice.textContent = `${color} 복사됨`;
-    notice.hidden = false;
-    setTimeout(closePicker, 1100);
   } catch (_) {
     notice.textContent = `${color} 복사 실패`;
     notice.hidden = false;
     busy = false;
+    return;
   }
+  await closePicker();
 });
 window.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePicker(); });
 
