@@ -1,0 +1,11 @@
+* { box-sizing: border-box; }
+html, body, #surface { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { background: #22242c; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+#surface { position: relative; display: flex; justify-content: center; align-items: center; }
+#screen { display: block; max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; }
+#loupe { position: fixed; display: none; z-index: 2; padding: 7px; border-radius: 10px; background: white; color: #20232b; box-shadow: 0 4px 24px #0007; pointer-events: none; text-align: center; }
+#zoom { display: block; width: 121px; height: 121px; image-rendering: pixelated; }
+#hex { padding: 6px 0 1px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#instructions, #notice { position: fixed; z-index: 3; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 11px 16px; border-radius: 9px; background: #22242dee; color: #fff; box-shadow: 0 3px 16px #0005; font-size: 13px; pointer-events: none; white-space: nowrap; }
+#instructions span { color: #a5a5b1; padding: 0 4px; }
+#notice { background: #4d40bd; }

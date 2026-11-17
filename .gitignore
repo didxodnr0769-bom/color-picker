@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+coverage/
+dist/
+*.log
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crx
+*.zip
+.vscode/
+.idea/

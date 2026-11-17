@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>색상 선택 · Color Picker</title>
+  <link rel="stylesheet" href="picker.css">
+  <script src="picker.js" defer></script>
+</head>
+<body>
+  <main id="surface" aria-label="캡처 화면에서 색상 선택">
+    <canvas id="screen" aria-label="클릭하여 색상 선택"></canvas>
+    <div id="loupe" aria-hidden="true"><canvas id="zoom" width="121" height="121"></canvas><div id="hex">#000000</div></div>
+    <div id="instructions" role="status">원하는 색상을 클릭하세요 <span>·</span> Esc 취소</div>
+    <div id="notice" role="alert" hidden></div>
+  </main>
+</body>
+</html>
