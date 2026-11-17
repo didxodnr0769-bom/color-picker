@@ -19,7 +19,7 @@ function showOverlay(url, token) {
   const frame = document.createElement('iframe');
   frame.title = '색상 선택';
   frame.setAttribute('allow', 'clipboard-write');
-  frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;display:block;';
+  frame.style.cssText = 'position:fixed;inset:0;width:100vw;height:100%;border:0;display:block;';
   frame.addEventListener('load', () => {
     frame.contentWindow.postMessage({ type: 'color-picker-init', token }, new URL(url).origin);
   });
