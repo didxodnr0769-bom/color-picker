@@ -1,12 +1,5 @@
-const COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 const pendingCaptures = new Map();
 const sessionKey = (tabId) => `picker:${tabId}`;
-
-async function saveColor(color) {
-  const { colors = [] } = await chrome.storage.local.get('colors');
-  const valid = Array.isArray(colors) ? colors.filter((item) => typeof item === 'string' && COLOR_PATTERN.test(item) && item !== color) : [];
-  await chrome.storage.local.set({ colors: [color, ...valid].slice(0, 10) });
-}
 
 // These functions run in the extension's isolated world, not in page JavaScript.
 function removeOverlay() {
@@ -70,9 +63,7 @@ async function startPicking(tab) {
       if (current?.token !== token) return;
       await chrome.storage.session.remove(sessionKey(tab.id));
       await dismiss(tab.id);
-      await chrome.action.setBadgeText({ text: '!' });
-      await chrome.action.setBadgeBackgroundColor({ color: '#B42318' });
-      await chrome.storage.session.set({ lastError: '이 페이지에서는 색상 선택 화면을 열 수 없습니다.' });
+      await showError(tab.id, '이 페이지에서는 색상 선택 화면을 열 수 없습니다.');
     }, 10000);
     return { started: true };
   } catch (_) {
@@ -93,10 +84,6 @@ async function pickerSession(message, sender) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || typeof sender.url !== 'string') return;
-  if (message?.type === 'pick-color' && sender.url === chrome.runtime.getURL('popup.html')) {
-    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => startPicking(tab)).then(sendResponse);
-    return true;
-  }
   if (message?.type === 'cancel-overlay' && sender.tab?.id && sender.frameId === 0) {
     (async () => {
       const key = sessionKey(sender.tab.id);
@@ -108,7 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })().then(() => sendResponse({}), () => sendResponse({}));
     return true;
   }
-  if (!['get-capture', 'save-color', 'close-picker'].includes(message?.type)) return;
+  if (!['get-capture', 'close-picker'].includes(message?.type)) return;
   (async () => {
     if (!(await pickerSession(message, sender))) return {};
     const key = sessionKey(sender.tab.id);
@@ -121,10 +108,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     const session = (await chrome.storage.session.get(key))[key];
     if (session?.frameId !== sender.frameId) return {};
-    if (message.type === 'save-color' && COLOR_PATTERN.test(message.color || '')) {
-      await saveColor(message.color);
-      return { saved: true };
-    }
     if (message.type === 'close-picker') {
       await chrome.storage.session.remove(key);
       await dismiss(sender.tab.id);
@@ -135,12 +118,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-chrome.commands.onCommand.addListener(async (command, tab) => {
-  if (command !== 'pick-color') return;
+async function showError(tabId, message) {
+  const details = { tabId };
+  await chrome.action.setBadgeText({ ...details, text: '!' });
+  await chrome.action.setBadgeBackgroundColor({ ...details, color: '#B42318' });
+  await chrome.action.setTitle({ ...details, title: `Color Picker · ${message}` });
+}
+
+async function runPicker(tab) {
+  if (!tab?.id) return;
+  await chrome.action.setBadgeText({ tabId: tab.id, text: '' });
+  await chrome.action.setTitle({ tabId: tab.id, title: 'Color Picker' });
   const outcome = await startPicking(tab);
-  if (outcome.error) {
-    await chrome.action.setBadgeText({ text: '!' });
-    await chrome.action.setBadgeBackgroundColor({ color: '#B42318' });
-    await chrome.storage.session.set({ lastError: outcome.error });
-  }
+  if (outcome.error) await showError(tab.id, outcome.error);
+}
+
+chrome.action.onClicked.addListener((tab) => { runPicker(tab).catch(() => {}); });
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command === 'pick-color') runPicker(tab).catch(() => {});
 });

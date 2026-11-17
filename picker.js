@@ -41,14 +41,16 @@ screen.addEventListener('click', async (event) => {
   if (!ready || busy) return;
   busy = true;
   const { color } = hexAt(event);
-  let copied = false;
-  try { await navigator.clipboard.writeText(color); copied = true; } catch (_) {}
-  let saved = false;
-  try { saved = (await chrome.runtime.sendMessage({ type: 'save-color', color, token }))?.saved === true; } catch (_) {}
-  notice.hidden = false;
-  notice.textContent = copied && saved ? `${color} 복사됨` : `${color} ${copied ? '복사됨 · 기록 저장 실패' : saved ? '저장됨 · 복사 실패' : '복사와 저장 실패'}`;
-  if (copied && saved) setTimeout(closePicker, 1100);
-  else busy = false;
+  try {
+    await navigator.clipboard.writeText(color);
+    notice.textContent = `${color} 복사됨`;
+    notice.hidden = false;
+    setTimeout(closePicker, 1100);
+  } catch (_) {
+    notice.textContent = `${color} 복사 실패`;
+    notice.hidden = false;
+    busy = false;
+  }
 });
 window.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePicker(); });
 
