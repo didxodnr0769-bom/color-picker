@@ -6,6 +6,7 @@ const hexLabel = document.querySelector('#hex');
 const notice = document.querySelector('#notice');
 let ready = false;
 let busy = false;
+let token;
 
 function hexAt(event) {
   const rect = screen.getBoundingClientRect();
@@ -16,8 +17,8 @@ function hexAt(event) {
 }
 
 async function closePicker() {
-  const tab = await chrome.tabs.getCurrent();
-  if (tab?.id) await chrome.tabs.remove(tab.id);
+  if (!token) return;
+  await chrome.runtime.sendMessage({ type: 'close-picker', token });
 }
 
 screen.addEventListener('pointermove', (event) => {
@@ -43,7 +44,7 @@ screen.addEventListener('click', async (event) => {
   let copied = false;
   try { await navigator.clipboard.writeText(color); copied = true; } catch (_) {}
   let saved = false;
-  try { saved = (await chrome.runtime.sendMessage({ type: 'save-color', color }))?.saved === true; } catch (_) {}
+  try { saved = (await chrome.runtime.sendMessage({ type: 'save-color', color, token }))?.saved === true; } catch (_) {}
   notice.hidden = false;
   notice.textContent = copied && saved ? `${color} 복사됨` : `${color} ${copied ? '복사됨 · 기록 저장 실패' : saved ? '저장됨 · 복사 실패' : '복사와 저장 실패'}`;
   if (copied && saved) setTimeout(closePicker, 1100);
@@ -51,11 +52,13 @@ screen.addEventListener('click', async (event) => {
 });
 window.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePicker(); });
 
-(async () => {
-  const token = new URLSearchParams(location.search).get('token');
+window.addEventListener('message', async (event) => {
+  if (ready || token || event.source !== window.parent || event.data?.type !== 'color-picker-init' || typeof event.data.token !== 'string') return;
   try {
-    const { image } = await chrome.runtime.sendMessage({ type: 'get-capture', token });
-    if (!image) throw new Error('expired');
+    const receivedToken = event.data.token;
+    const { image } = await chrome.runtime.sendMessage({ type: 'get-capture', token: receivedToken });
+    if (!image) return;
+    token = receivedToken;
     const captured = new Image();
     captured.onload = () => {
       screen.width = captured.naturalWidth;
@@ -66,4 +69,4 @@ window.addEventListener('keydown', (event) => { if (event.key === 'Escape') clos
     captured.onerror = () => { notice.hidden = false; notice.textContent = '화면을 불러오지 못했습니다. Esc를 눌러 닫아주세요.'; };
     captured.src = image;
   } catch (_) { notice.hidden = false; notice.textContent = '화면을 불러오지 못했습니다. 다시 선택해 주세요.'; }
-})();
+});

@@ -5,6 +5,7 @@
   "description": "웹페이지의 색상을 선택하고 HEX 코드로 복사합니다.",
   "permissions": [
     "activeTab",
+    "scripting",
     "storage",
     "clipboardWrite"
   ],
@@ -33,5 +34,16 @@
       },
       "description": "색상 선택 시작"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "picker.html"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
 }
